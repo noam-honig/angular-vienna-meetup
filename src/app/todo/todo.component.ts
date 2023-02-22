@@ -1,31 +1,33 @@
 import { Component, OnDestroy, OnInit } from '@angular/core'
-import { Task } from './task'
+import { remult } from 'remult'
+import { Task } from '../../shared/task'
+import { TasksController } from '../../shared/TasksController'
 
 @Component({
   selector: 'app-todo',
   templateUrl: './todo.component.html'
 })
 export class TodoComponent implements OnInit, OnDestroy {
-  
-  tasks: Task[] = [
-    { id: 1, title: 'Setup', completed: true },
-    { id: 2, title: 'Entities', completed: false },
-    { id: 3, title: 'Paging, Sorting and Filtering', completed: false },
-    { id: 4, title: 'CRUD Operations', completed: false },
-    { id: 5, title: 'Live Query', completed: false },
-    { id: 6, title: 'Validation', completed: false },
-    { id: 7, title: 'Backend methods', completed: false },
-    { id: 8, title: 'Database', completed: false },
-    { id: 9, title: 'Authentication and Authorization', completed: false },
-    { id: 10, title: 'Deployment', completed: false }
-  ]
-  ngOnInit() {}
-  ngOnDestroy() {}
-  
+  tasks: Task[] = []
+  taskRepo = remult.repo(Task)
+  ngOnInit() {
+    this.unSub = this.taskRepo
+      .liveQuery({
+        where: {
+          completed: undefined
+        }
+      })
+      .subscribe(({ items }) => (this.tasks = items))
+  }
+  unSub = () => {}
+  ngOnDestroy() {
+    this.unSub()
+  }
+
   newTaskTitle = ''
   async addTask() {
     try {
-      this.tasks.push({
+      await this.taskRepo.insert({
         id: this.tasks.length,
         title: this.newTaskTitle,
         completed: false
@@ -36,8 +38,17 @@ export class TodoComponent implements OnInit, OnDestroy {
     }
   }
 
+  async saveTask(task: Task) {
+    try {
+      await this.taskRepo.save(task)
+    } catch (error: any) {
+      alert(error.message)
+    }
+  }
+
   async deleteTask(task: Task) {
     try {
+      await this.taskRepo.delete(task)
       this.tasks = this.tasks.filter((t) => t != task)
     } catch (error: any) {
       alert(error.message)
@@ -45,8 +56,6 @@ export class TodoComponent implements OnInit, OnDestroy {
   }
 
   async setAllCompleted(completed: boolean) {
-    for (const task of this.tasks) {
-      task.completed = completed
-    }
+    await TasksController.setAllCompleted(completed)
   }
 }

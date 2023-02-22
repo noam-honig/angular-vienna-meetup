@@ -1,6 +1,6 @@
 <div>
   <main>
-    <form (submit)="addTask()">
+    <form *ngIf="taskRepo.metadata.apiInsertAllowed" (submit)="addTask()">
       <input
         [(ngModel)]="newTaskTitle"
         name="newTaskTitle"
@@ -9,9 +9,13 @@
       <button>Add</button>
     </form>
     <div *ngFor="let task of tasks">
-      <input type="checkbox" [(ngModel)]="task.completed" />
-      <input [(ngModel)]="task.title" />
-      <button (click)="deleteTask(task)">X</button>
+      <input
+        type="checkbox"
+        (change)="saveTask(task)"
+        [(ngModel)]="task.completed"
+      />
+      <input [(ngModel)]="task.title" (blur)="saveTask(task)" />
+      <button *ngIf="taskRepo.metadata.apiDeleteAllowed" (click)="deleteTask(task)">X</button>
     </div>
     <footer>
       <button (click)="setAllCompleted(true)">Set all completed</button>
